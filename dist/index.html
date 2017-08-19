@@ -1,0 +1,239 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simon</title>
+  <style>
+    html {
+      background: #1b1f2f;
+      color: black;
+      font-family: sans-serif;
+      user-select: none;
+      cursor: default;
+    }
+    .circle {
+      width: 450px;
+      height: 450px;
+      background-color: black;
+      border-radius: 50%;
+      position: relative;
+      margin: 50px auto;
+    }
+    .circle-inside {
+      width: 90%;
+      height: 90%;
+      background-color: gray;
+      border-radius: 50%;
+      position: absolute;
+      left: 5%;
+      top: 5%;
+    }
+    .top-left {
+      border-radius: 100% 0 0 0;
+      background-color: green;
+      width: 50%;
+      height: 50%;
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+    .top-right {
+      border-radius: 0 100% 0 0;
+      background-color: #b51212;
+      width: 50%;
+      height: 50%;
+      position: absolute;
+      left: 50%;
+      top: 0;
+    }
+    .bottom-left {
+      border-radius: 0 0 0 100%;
+      background-color: #b5b510;
+      width: 50%;
+      height: 50%;
+      position: absolute;
+      left: 0;
+      top: 50%;
+    }
+    .bottom-right {
+      border-radius: 0 0 100% 0;
+      background-color: #1919bd;
+      width: 50%;
+      height: 50%;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+    }
+    .x-line {
+      background-color: black;
+      width: 100%;
+      height: 10%;
+      position: absolute;
+      left: 0;
+      top: 45%;
+    }
+    .y-line {
+      background-color: black;
+      width: 10%;
+      height: 100%;
+      position: absolute;
+      left: 45%;
+      top: 0;
+    }
+    .circle-controls {
+      border-radius: 50%;
+      background-color: black;
+      width: 60%;
+      height: 60%;
+      position: absolute;
+      left: 20%;
+      top: 20%;
+    }
+    .simon-text {
+      color: white;
+      font-size: 3rem;
+      font-weight: 900;
+      text-align: center;
+      position: absolute;
+      top: 20%;
+      left: 20%;
+      width: 60%;
+      height: 20%;
+    }
+    .score {
+      color: white;
+      background-color: gray;
+      font-size: 1rem;
+      text-align: center;
+      position: absolute;
+      top: 60%;
+      left: 20%;
+      width: 60%;
+      height: 10%;
+      padding-top: 6px;
+    }
+    .start-btn {
+      color: white;
+      background-color: red;
+      width: 10%;
+      height: 10%;
+      border-radius: 100%;
+      font-size: 0.5rem;
+      line-height: 25px;
+      text-align: center;
+      position: absolute;
+      left: 35%;
+      top: 80%;
+    }
+    .strict-btn {
+      color: white;
+      background-color: red;
+      width: 10%;
+      height: 10%;
+      border-radius: 100%;
+      font-size: 0.5rem;
+      line-height: 25px;
+      text-align: center;
+      position: absolute;
+      left: 55%;
+      top: 80%;
+    }
+    .strict-light {
+      background-color: red;
+      width: 2%;
+      height: 2%;
+      border-radius: 100%;
+      position: absolute;
+      left: 58.5%;
+      top: 75%;
+    }
+    .click-1 {
+      background-color: #1bb51b;
+    }
+    .click-2 {
+      background-color: #ff3526;
+    }
+    .click-3 {
+      background-color: #ecec23;
+    }
+    .click-4 {
+      background-color: #2323ff;
+    }
+  </style>
+</head>
+<body>
+  <script src="elm.js"></script>
+  <script>
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+    
+    const playSound = soundInt => {
+      const url =
+        `https://s3.amazonaws.com/freecodecamp/simonSound${soundInt}.mp3`;
+      return new Promise(async resolve => {
+        new Audio(url).play();
+        document.querySelector(".btn-" + soundInt)
+          .classList.add("click-" + soundInt);
+        await sleep(500);
+        document.querySelector(".btn-" + soundInt)
+          .classList.remove("click-" + soundInt);
+        await sleep(500);
+        resolve();
+      });
+    };
+    
+    const playSeries = series => {
+      return new Promise(async resolve => {
+        await sleep(1000);
+        for (let i = 0; i < series.length; i++) {
+          await playSound(series[i]);
+        }
+        resolve();
+      });
+    };
+    
+    const playError = () => {
+      return new Promise(async resolve => {
+        await Promise.all([
+          playSound(1),
+          playSound(2),
+          playSound(3),
+          playSound(4)
+        ]);
+        resolve();
+      });
+    };
+    
+    const playErrorThenSeries = async series => {
+      return new Promise(async resolve => {
+        await playError();
+        await playSeries(series);
+        resolve();
+      });
+    };
+    
+    const sendRandomSoundInt = () => {
+      const randomSoundInt = Math.ceil(Math.random() * 4);
+      app.ports.getRandomSoundInt.send(randomSoundInt);
+    };
+    
+    const playErrorThenRandomInt = async () => {
+      await playError();
+      sendRandomSoundInt();
+    };
+    
+    const playSoundThenRandomInt = async soundInt => {
+      await playSound(soundInt);
+      sendRandomSoundInt();
+    };
+    
+    const app = Elm.Main.fullscreen();
+    
+    app.ports.playSound.subscribe(playSound);
+    app.ports.playSeries.subscribe(playSeries);
+    app.ports.playErrorThenSeries.subscribe(playErrorThenSeries);
+    app.ports.playErrorThenRandomInt.subscribe(playErrorThenRandomInt);
+    app.ports.playSoundThenRandomInt.subscribe(playSoundThenRandomInt);
+  </script>
+</body>
+</html>
