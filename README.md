@@ -1,4 +1,6 @@
-# simon
+# Simon
+
+<img src="screenshot.png" width="500">
 
 ## How to run
 
