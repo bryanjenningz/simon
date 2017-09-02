@@ -58,13 +58,6 @@ view model =
         ]
 
 
-viewButton : Int -> Html Msg
-viewButton soundInt =
-    button
-        [ onClick (Click soundInt) ]
-        [ text (toString soundInt) ]
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
