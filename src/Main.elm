@@ -10,12 +10,12 @@ type Msg
     = Click Int
     | Start
     | ToggleStrict
-    | SoundInt Int
+    | AddSound Int
 
 
 type alias Model =
-    { series : List Int
-    , userSeries : List Int
+    { sounds : List Int
+    , userSounds : List Int
     , isStrict : Bool
     }
 
@@ -38,7 +38,7 @@ view model =
             , div [ class "circle-controls" ]
                 [ div [ class "simon-text" ] [ text "Simon" ]
                 , div [ class "score" ]
-                    [ text (toString (List.length model.series)) ]
+                    [ text (toString (List.length model.sounds)) ]
                 , div
                     [ class "start-btn"
                     , onClick Start
@@ -62,56 +62,56 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Start ->
-            ( { model | series = [], userSeries = [] }, randomSoundInt )
+            ( { model | sounds = [], userSounds = [] }, randomSound )
 
         ToggleStrict ->
             ( { model | isStrict = not model.isStrict }, Cmd.none )
 
         Click soundInt ->
-            if model.series == [] then
+            if model.sounds == [] then
                 ( model, playSound soundInt )
             else
                 let
-                    userSeries =
-                        model.userSeries ++ [ soundInt ]
+                    userSounds =
+                        model.userSounds ++ [ soundInt ]
 
-                    expectedSeries =
-                        List.take (List.length userSeries) model.series
+                    expectedSounds =
+                        List.take (List.length userSounds) model.sounds
                 in
-                    if userSeries == expectedSeries then
-                        if userSeries == model.series then
-                            ( { model | userSeries = [] }
+                    if userSounds == expectedSounds then
+                        if userSounds == model.sounds then
+                            ( { model | userSounds = [] }
                             , playSoundThenRandomInt soundInt
                             )
                         else
-                            ( { model | userSeries = userSeries }
+                            ( { model | userSounds = userSounds }
                             , playSound soundInt
                             )
                     else if model.isStrict then
-                        ( { model | series = [], userSeries = [] }
+                        ( { model | sounds = [], userSounds = [] }
                         , playErrorThenRandomInt ()
                         )
                     else
-                        ( { model | userSeries = [] }
-                        , playErrorThenSeries model.series
+                        ( { model | userSounds = [] }
+                        , playErrorThenSeries model.sounds
                         )
 
-        SoundInt int ->
+        AddSound int ->
             let
-                series =
-                    model.series ++ [ int ]
+                sounds =
+                    model.sounds ++ [ int ]
             in
-                ( { model | series = series }, playSeries series )
+                ( { model | sounds = sounds }, playSeries sounds )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    getRandomSoundInt SoundInt
+    getRandomSoundInt AddSound
 
 
-randomSoundInt : Cmd Msg
-randomSoundInt =
-    Random.generate SoundInt (Random.int 1 4)
+randomSound : Cmd Msg
+randomSound =
+    Random.generate AddSound (Random.int 1 4)
 
 
 port playSound : Int -> Cmd msg
